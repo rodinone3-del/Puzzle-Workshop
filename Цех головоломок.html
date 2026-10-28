@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Цех головоломок</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Onest:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef1ec;--panel:#fff;--off:#c5d1d9;--on:#e2a41f;--ink:#1b2a35;--mute:#5d6f7b;--acc:#1f8a70;--line:#d3dbd8;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#13202a;--panel:#1b2d3a;--off:#2b4257;--on:#f0c75e;--ink:#eef2f0;--mute:#9db0bb;--acc:#7fd1b9;--line:#2c4252;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#13202a;--panel:#1b2d3a;--off:#2b4257;--on:#f0c75e;--ink:#eef2f0;--mute:#9db0bb;--acc:#7fd1b9;--line:#2c4252;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 Onest,system-ui,sans-serif;min-height:100vh}
+main{max-width:440px;margin:0 auto;padding:28px 20px 40px}
+h1,h2{font-family:Unbounded,system-ui,sans-serif;font-weight:700;margin:0;letter-spacing:-.01em}
+h1{font-size:30px;line-height:1.1}h2{font-size:21px}
+p{margin:0}.mute{color:var(--mute)}
+button{font:inherit;cursor:pointer;border:0;color:inherit}
+button:focus-visible,input:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.btn{display:block;width:100%;padding:13px 18px;border-radius:14px;background:var(--panel);border:2px solid var(--line);font-weight:600;text-align:left;margin-top:10px}
+.btn:hover{border-color:var(--acc)}
+.btn.main{background:var(--on);border-color:var(--on);color:#1b2a35}
+.btn small{display:block;font-weight:400;opacity:.8}
+.c{text-align:center}
+.logo{display:grid;grid-template-columns:repeat(3,52px);gap:8px;margin:14px 0 22px}
+.logo i{height:52px;border-radius:12px;background:var(--off);transition:background .25s}
+.logo i.on{background:var(--on)}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.link{background:none;padding:6px 0;color:var(--acc);font-weight:600}
+.stats{display:flex;gap:10px;margin-bottom:16px}
+.stat{flex:1;background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:6px 12px}
+.stat b{display:block;font-family:Unbounded,system-ui,sans-serif;font-size:18px}
+.board{display:grid;gap:8px;margin:0 auto 16px;width:100%;max-width:400px}
+.tile{aspect-ratio:1;border-radius:14px;background:var(--off);transition:background .15s,transform .15s}
+.tile.on{background:var(--on)}.tile:active{transform:scale(.94)}
+.tabs{display:flex;gap:8px;margin:12px 0}
+.tab{flex:1;padding:8px 4px;border-radius:12px;background:var(--panel);border:2px solid var(--line);font-weight:600;font-size:14px}
+.tab[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:#fff}
+.tab:disabled{opacity:.5;cursor:not-allowed}
+ol.lb{list-style:none;margin:0;padding:0}
+ol.lb li{display:grid;grid-template-columns:28px 1fr auto auto;gap:10px;align-items:center;padding:12px 4px;border-bottom:1px solid var(--line)}
+ol.lb li:first-child .rk{color:var(--on)}
+.rk{font-family:Unbounded,system-ui,sans-serif;font-weight:700}
+.empty{padding:26px 0;text-align:center}
+.pipe{aspect-ratio:1;border-radius:10px;background:var(--panel);border:2px solid var(--line);padding:2px}
+.pipe svg{width:100%;height:100%}
+.pipe line{stroke:var(--mute);stroke-width:18;stroke-linecap:round}
+.pipe circle{fill:var(--mute)}
+.pipe.lit line{stroke:var(--on)}.pipe.lit circle{fill:var(--on)}
+.pipe.src{border-left:6px solid var(--acc)}.pipe.drn{border-right:6px solid var(--acc)}
+#ar{position:relative;height:360px;border-radius:18px;background:var(--panel);border:2px solid var(--line);overflow:hidden;touch-action:none;margin-bottom:14px}
+#belt{position:absolute;left:0;right:0;top:30px;height:80px;background:repeating-linear-gradient(90deg,var(--off) 0 18px,var(--line) 18px 36px);animation:mv 1s linear infinite}
+@keyframes mv{to{background-position:36px 0}}
+.it{position:absolute;left:0;top:0;width:56px;height:56px;cursor:grab;touch-action:none;z-index:2}
+.hole{position:absolute;bottom:28px;width:56px;height:56px}
+dialog{border:0;border-radius:18px;padding:24px;background:var(--panel);color:var(--ink);max-width:340px;width:calc(100% - 40px)}
+dialog::backdrop{background:rgba(10,20,28,.6)}
+input{width:100%;padding:12px 14px;border-radius:12px;border:2px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;margin:14px 0 4px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<dialog id="nm">
+  <h2>Як вас звати?</h2>
+  <p class="mute" style="margin-top:8px">Ім’я потрібне для таблиці лідерів. Ми запитуємо його лише один раз.</p>
+  <input id="name" maxlength="12" placeholder="Ваше ім’я" aria-label="Ваше ім’я" autocomplete="off">
+  <button class="btn main c" id="ok">Почати</button>
+</dialog>
+<dialog id="win">
+  <h2 id="wt">Гру завершено</h2>
+  <p class="mute" id="wi" style="margin-top:8px"></p>
+  
+  <button class="btn main c" id="wn">Наступний рівень</button>
+  <button class="btn c" id="wa">Грати ще раз</button>
+  <button class="btn c" id="wm">Меню</button>
+</dialog>
+<script>
+const $=s=>document.querySelector(s),app=$('#app'),win=$('#win'),R=n=>Math.floor(Math.random()*n);
+const G={lights:['Світлоплит','Запаліть усі плитки'],pipes:['Труби','Крутіть труби, щоб пустити воду'],belt:['Конвеєр','Перетягуйте фігури в отвори'],mem:['Пам’ять','Повторіть послідовність']};
+let S=0,timer,raf,t0=0,lbG='lights';
+const fmt=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0'),el=()=>Math.floor((Date.now()-t0)/1000);
+function ld(){try{return JSON.parse(localStorage.getItem('cekh_lb')||'{}')}catch(e){return {}}}
+function sv(d){try{localStorage.setItem('cekh_lb',JSON.stringify(d))}catch(e){}}
+function scr(h){clearInterval(timer);cancelAnimationFrame(raf);S++;app.innerHTML=h}
+function page(t,r,b){scr(`<div class="bar"><h2>${t}</h2><button class="link" id="mn">Меню</button></div><p class="mute" style="margin-bottom:12px">${r}</p>${b}`);$('#mn').onclick=menu;t0=Date.now();timer=setInterval(()=>{const e=$('#tm');if(e)e.textContent=fmt(el())},500)}
+const stats=a=>`<div class="stats">${a.map(([l,i,v])=>`<div class="stat"><span class="mute">${l}</span><b id="${i}">${v}</b></div>`).join('')}</div>`;
+const tabs=(a,i)=>`<div class="tabs">${a.map((x,k)=>`<button class="tab" data-i="${k}" aria-pressed="${k===i}">${x}</button>`).join('')}</div>`;
+const bindTabs=f=>app.querySelectorAll('.tab[data-i]').forEach(b=>b.onclick=()=>f(+b.dataset.i));
+const rs='<button class="btn c" id="rs">Почати заново</button>';
+const LEN=4,F=()=>({lights,pipes,belt,mem}),LN={lights:['Тест','4×4','5×5','★ 6×6'],pipes:['4×4','5×5','6×6','★ 7×7'],belt:['Легко','Норма','Швидко','★ Бонус'],mem:['Розминка','Норма','Складно','★ 4×4']};
+let pm={},nmem='';
+const prog=()=>{try{return JSON.parse(localStorage.getItem('cekh_pr')||'{}')}catch(e){return pm}},sp=d=>{pm=d;try{localStorage.setItem('cekh_pr',JSON.stringify(d))}catch(e){}};
+const NM=()=>{try{return localStorage.getItem('cekh_name')||nmem}catch(e){return nmem}},cl=g=>Math.min(prog()[g]||0,LEN-1);
+const lvTabs=(g,i)=>{const u=prog()[g]||0;return `<div class="tabs">${LN[g].map((x,k)=>`<button class="tab" data-i="${k}" aria-pressed="${k===i}" ${k>u?'disabled':''}>${k>u?'🔒 ':''}${x}</button>`).join('')}</div>`};
+function finish(g,i,p,info,pass){
+  const t=el();let msg='';
+  if(pass){const pr=prog();pr[g]=Math.max(pr[g]||0,i+1);sp(pr);
+    const d=ld(),l=d[g]||[],n=NM()||'Гравець',e=l.find(x=>x.n===n&&x.l===i);
+    if(!e)l.push({n,p,t,l:i});else if(p>e.p){e.p=p;e.t=t}
+    l.sort((a,b)=>b.p-a.p||a.t-b.t);d[g]=l.slice(0,20);sv(d);msg=' Результат збережено в таблиці лідерів.'}
+  $('#wt').textContent=pass?(i==LEN-1?'Бонусний рівень пройдено!':'Рівень пройдено!'):'Не вдалося';
+  $('#wi').textContent=(pass?`Очки: ${p} · `:'')+info+'.'+msg;
+  $('#wn').style.display=pass&&i+1<LEN?'':'none';
+  $('#wn').onclick=()=>{win.close();F()[g](i+1)};
+  $('#wa').onclick=()=>{win.close();F()[g](i)};
+  $('#wm').onclick=()=>{win.close();menu()};
+  setTimeout(()=>win.showModal(),300)}
+$('#ok').onclick=()=>{const n=$('#name').value.replace(/[<>&]/g,'').trim()||'Гравець';nmem=n;try{localStorage.setItem('cekh_name',n)}catch(e){}$('#nm').close();menu()};
+$('#nm').addEventListener('cancel',e=>e.preventDefault());
+
+
+function menu(){
+  scr(`<h1>Цех головоломок</h1><p class="mute" style="margin-top:8px">${NM()?'Привіт, '+NM()+'! ':''}Проходьте рівні, відкривайте бонусні й піднімайтеся в таблиці лідерів.</p>
+  <div class="logo" aria-hidden="true">${[1,0,1,0,1,0,1,0,1].map(v=>`<i class="${v?'on':''}"></i>`).join('')}</div>
+  ${Object.keys(G).map((k,i)=>`<button class="btn ${i?'':'main'}" data-g="${k}">${G[k][0]}<small>${G[k][1]} · пройдено ${(prog()[k]||0)}/4</small></button>`).join('')}
+  <button class="btn" id="lb">Таблиця лідерів</button>`);
+  app.querySelectorAll('.logo i').forEach(e=>e.onmouseenter=()=>e.classList.toggle('on'));
+  app.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>F()[b.dataset.g](cl(b.dataset.g)));
+  $('#lb').onclick=()=>board(lbG);
+}
+function board(g){
+  lbG=g;const l=ld()[g]||[];
+  scr(`<div class="bar"><h2>Лідери</h2><button class="link" id="mn">Меню</button></div>
+  <div class="tabs">${Object.keys(G).map(k=>`<button class="tab" data-k="${k}" aria-pressed="${k===g}">${G[k][0]}</button>`).join('')}</div>`+
+  (l.length?`<ol class="lb">${l.slice(0,10).map((r,k)=>`<li><span class="rk">${k+1}</span><span>${r.n.replace(/[<>&]/g,'')} <small class="mute">(рів. ${(r.l+1)||1})</small></span><b>${r.p} оч.</b><span class="mute">${fmt(r.t)}</span></li>`).join('')}</ol>`
+  :`<div class="empty mute">Тут поки порожньо. Зіграйте й займіть перше місце.</div><button class="btn main c" id="go">Грати</button>`));
+  $('#mn').onclick=menu;
+  app.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>board(b.dataset.k));
+  const o=$('#go');if(o)o.onclick=()=>({lights,pipes,belt,mem})[g]();
+}
+
+/* 1. Світлоплит */
+function tog(g,n,i){const r=Math.floor(i/n),c=i%n;[[r,c],[r-1,c],[r+1,c],[r,c-1],[r,c+1]].forEach(([y,x])=>{if(y>=0&&y<n&&x>=0&&x<n)g[y*n+x]^=1})}
+function lights(i=0){
+  const n=[3,4,5,6][i],K=[[0,4,8],[1,6,11,12,15],[0,7,12,18,24,5,21],[0,7,14,21,28,35,3,16,26,32]][i],g=Array(n*n).fill(1);K.forEach(c=>tog(g,n,c));let mv=0,done=0;
+  page('Світлоплит','Клік перемикає плитку та її сусідів. Запаліть усі.',lvTabs('lights',i)+stats([['Ходи','mv',0],['Час','tm','00:00']])+`<div class="board" id="bd" style="grid-template-columns:repeat(${n},1fr)"></div>`+rs);
+  const bd=$('#bd'),paint=()=>{[...bd.children].forEach((t,k)=>t.classList.toggle('on',!!g[k]));$('#mv').textContent=mv};
+  g.forEach((v,k)=>{const t=document.createElement('button');t.className='tile';t.setAttribute('aria-label','Плитка '+(k+1));t.onclick=()=>{if(done)return;tog(g,n,k);mv++;paint();if(g.every(Boolean)){done=1;finish('lights',i,Math.max(50,1000-mv*20-el()*2)*(i+1),`ходів: ${mv}`,1)}};bd.appendChild(t)});
+  paint();bindTabs(lights);$('#rs').onclick=()=>lights(i);
+}
+
+/* 2. Труби */
+function pipes(i=0){
+  const n=4+i,N=1,E=2,Sx=4,W=8,rot=m=>((m<<1)|(m>>3))&15;
+  let r=R(n),c=0,lv=0;const r0=r,path=[[r,0,W]],vis=new Set([r*n]),goal=Array(n*n).fill(0);
+  while(c<n-1){const o=['R','R'];if(lv!==1&&r>0&&!vis.has((r-1)*n+c))o.push('U');if(lv!==-1&&r<n-1&&!vis.has((r+1)*n+c))o.push('D');
+    const m=o[R(o.length)];let en;if(m=='R'){c++;lv=0;en=W}else if(m=='U'){r--;lv=-1;en=Sx}else{r++;lv=1;en=N}
+    vis.add(r*n+c);path.push([r,c,en])}
+  const lvOut=[];path.forEach((p,k)=>{const nx=path[k+1];let out=E;if(nx){out=nx[2]==W?E:nx[2]==Sx?N:Sx}goal[p[0]*n+p[1]]=p[2]|out});
+  const pool=[5,10,3,6,12,9,7,14,13,11],on={};path.forEach(p=>on[p[0]*n+p[1]]=1);
+  const m=goal.map((v,k)=>{let x=on[k]?v:pool[R(10)];for(let q=R(4);q>0;q--)x=rot(x);return x});
+  const dr=path[path.length-1][0];let mv=0,done=0;
+  page('Труби','Клікайте на труби, щоб повернути їх. З’єднайте лівий край із правим.',lvTabs('pipes',i)+stats([['Ходи','mv',0],['Час','tm','00:00']])+`<div class="board" id="bd" style="grid-template-columns:repeat(${n},1fr)"></div>`+rs);
+  const bd=$('#bd'),D={1:[50,0],2:[100,50],4:[50,100],8:[0,50]};
+  function flow(){const s=new Set();if(!(m[r0*n]&W))return s;const q=[r0*n];s.add(r0*n);
+    while(q.length){const k=q.pop(),y=Math.floor(k/n),x=k%n;[[N,-1,0,Sx],[E,0,1,W],[Sx,1,0,N],[W,0,-1,E]].forEach(([b,dy,dx,o])=>{const ny=y+dy,nx=x+dx;if(m[k]&b&&ny>=0&&ny<n&&nx>=0&&nx<n&&m[ny*n+nx]&o&&!s.has(ny*n+nx)){s.add(ny*n+nx);q.push(ny*n+nx)}})}return s}
+  function paint(){const f=flow();[...bd.children].forEach((b,k)=>{b.className='pipe'+(f.has(k)?' lit':'')+(k==r0*n?' src':'')+(k==dr*n+n-1?' drn':'');
+    b.innerHTML='<svg viewBox="0 0 100 100">'+[1,2,4,8].filter(s=>m[k]&s).map(s=>`<line x1="50" y1="50" x2="${D[s][0]}" y2="${D[s][1]}"/>`).join('')+'<circle cx="50" cy="50" r="11"/></svg>'});
+    $('#mv').textContent=mv;if(!done&&f.has(dr*n+n-1)&&m[dr*n+n-1]&E){done=1;finish('pipes',i,Math.max(50,800-mv*15-el()*3)*(i+1),`ходів: ${mv}`,1)}}
+  for(let k=0;k<n*n;k++){const b=document.createElement('button');b.setAttribute('aria-label','Труба '+(k+1));b.onclick=()=>{if(done)return;m[k]=rot(m[k]);mv++;paint()};bd.appendChild(b)}
+  paint();bindTabs(pipes);$('#rs').onclick=()=>pipes(i);
+}
+
+/* 3. Конвеєр */
+function belt(i=0){
+  const NT=[3,4,4,4][i],TOT=[8,12,16,20][i],T=['circle','square','tri','hex'].slice(0,NT),C=['#e0674f','#1f8a70','#e2a41f','#5b7fd6'];
+  const sh=(t,f,s='')=>{const a=`fill="${f}" ${s}`;return '<svg viewBox="0 0 56 56" width="56" height="56">'+{circle:`<circle cx="28" cy="28" r="22" ${a}/>`,square:`<rect x="7" y="7" width="42" height="42" rx="6" ${a}/>`,tri:`<polygon points="28,6 51,48 5,48" ${a}/>`,hex:`<polygon points="28,5 49,16 49,40 28,51 7,40 7,16" ${a}/>`}[t]+'</svg>'};
+  page('Конвеєр','Перетягніть кожну фігуру в отвір її форми. Не пропускайте і не помиляйтеся.',lvTabs('belt',i)+stats([['Очки','sc',0],['Життя','lf',3],['Лишилось','lt',TOT]])+`<div id="ar"><div id="belt"></div>${T.map((t,k)=>`<div class="hole" style="left:calc(${k*100/NT+50/NT}% - 28px)">${sh(t,'var(--bg)','stroke="var(--mute)" stroke-width="3" stroke-dasharray="5 4"')}</div>`).join('')}</div>`+rs);
+  const ar=$('#ar'),H=[...ar.querySelectorAll('.hole')],W=ar.clientWidth,s0=S;
+  let items=[],sp=0,res=0,ok=0,pts=0,lf=3,acc=1.7,last=performance.now(),end=0;
+  const pl=o=>o.el.style.transform=`translate(${o.x}px,${o.y}px)`,up=()=>{$('#sc').textContent=pts;$('#lf').textContent=lf;$('#lt').textContent=TOT-res};
+  const rm=o=>{o.el.remove();items=items.filter(q=>q!==o);res++;up()};
+  function spawn(){const t=R(NT),e=document.createElement('div');e.className='it';e.innerHTML=sh(T[t],C[t]);ar.appendChild(e);const o={el:e,t,x:-56,y:42,d:0};items.push(o);sp++;
+    const pos=ev=>{const b=ar.getBoundingClientRect();return[ev.clientX-b.left,ev.clientY-b.top]};
+    e.onpointerdown=ev=>{o.d=1;e.setPointerCapture(ev.pointerId);const[x,y]=pos(ev);o.ox=x-o.x;o.oy=y-o.y};
+    e.onpointermove=ev=>{if(!o.d)return;const[x,y]=pos(ev);o.x=x-o.ox;o.y=y-o.oy;pl(o)};
+    e.onpointerup=()=>{if(!o.d)return;o.d=0;const cx=o.x+28,cy=o.y+28;let hit=-1;H.forEach((h,k)=>{if(Math.hypot(cx-h.offsetLeft-28,cy-h.offsetTop-28)<46)hit=k});
+      if(hit<0){o.y=42;pl(o)}else{if(hit===o.t){pts+=100;ok++}else lf--;rm(o)}}}
+  function loop(now){if(S!==s0||end)return;const dt=Math.min(.05,(now-last)/1000);last=now;acc+=dt;
+    if(sp<TOT&&acc>=1.7){acc=0;spawn()}
+    items.slice().forEach(o=>{if(!o.d){o.x+=(45+i*15+sp*3)*dt;pl(o);if(o.x>W){lf--;rm(o)}}});up();
+    if(lf<=0||res>=TOT){end=1;finish('belt',i,(pts+Math.max(0,lf)*50)*(i+1),`вірно: ${ok}/${TOT}`,lf>0);return}
+    raf=requestAnimationFrame(loop)}
+  up();raf=requestAnimationFrame(loop);$('#rs').onclick=()=>belt(i);bindTabs(belt);
+}
+
+/* 4. Пам'ять */
+function mem(i=0){const N=i==3?4:3,goal=[4,6,8,10][i];
+  page('Пам’ять','Запам’ятайте послідовність підсвічених плиток і повторіть її. З кожним раундом вона довшає.',lvTabs('mem',i)+stats([['Раунд','rd','0/'+goal],['Стан','st','Дивіться'],['Час','tm','00:00']])+`<div class="board" id="bd" style="grid-template-columns:repeat(${N},1fr)"></div>`+rs);
+  const bd=$('#bd'),s0=S;let seq=[],idx=0,lock=1;
+  const fl=(k,ms=420)=>{const t=bd.children[k];t.classList.add('on');setTimeout(()=>t.classList.remove('on'),ms)};
+  function next(){if(s0!==S)return;seq.push(R(N*N));idx=0;lock=1;$('#rd').textContent=seq.length+'/'+goal;$('#st').textContent='Дивіться';
+    seq.forEach((k,j)=>setTimeout(()=>{if(s0===S)fl(k)},600+j*700));
+    setTimeout(()=>{if(s0===S){lock=0;$('#st').textContent='Ваш хід'}},600+seq.length*700)}
+  for(let k=0;k<N*N;k++){const t=document.createElement('button');t.className='tile';t.setAttribute('aria-label','Плитка '+(k+1));
+    t.onclick=()=>{if(lock)return;fl(k,250);if(k!==seq[idx]){lock=1;finish('mem',i,0,`раундів: ${seq.length-1}`,0);return}
+      if(++idx===seq.length){lock=1;if(seq.length>=goal)finish('mem',i,goal*100*(i+1),`раундів: ${goal}`,1);else setTimeout(next,800)}};bd.appendChild(t)}
+  $('#rs').onclick=()=>mem(i);bindTabs(mem);next();
+}
+menu();if(!NM())$('#nm').showModal();
+</script>
+</body>
+</html>
